@@ -3,9 +3,9 @@
 #include "include/common.h"
 
 int main(int argc, char **argv) {
-    //curl init
-    curl_global_init(CURL_GLOBAL_ALL);
+    FILE *file = fopen("res.php", "w");
 
-    printf("Hello world!\n");
+    int code = httpGet("http://www.google.com", (void *)file, curlCallback);
+
     return 0;
 }
