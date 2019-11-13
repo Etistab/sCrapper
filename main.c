@@ -1,11 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "include/common.h"
 
-int main(int argc, char **argv) {
-    FILE *file = fopen("res.php", "w");
 
-    int code = httpGet("http://www.google.com", (void *)file, curlCallback);
+int main(int argc, char **argv) {
+    scrapWebsite("google", "https://www.google.com", 0);
 
     return 0;
 }
