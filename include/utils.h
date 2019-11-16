@@ -1,7 +1,16 @@
+/*
+** Filename : utils.h
+**
+** Made by  : Baptiste LEGO
+**
+** Description  : utils functions used in App
+*/
+
 #ifndef UTILS_H
 
 #define UTILS_H
-#define DEFAULT_ALLOC_ERR_MSG "Full memory\n"
+#define VERSIONING_ON   1
+#define VERSIONING_OFF  0
 
 #include "curl/curl.h"
 
@@ -14,5 +23,9 @@ int createDirectory(char *name);
 void curlSetDefaultOptions(CURL *curl, void *);
 int httpGet(char *url, void *buffer);
 int *indexOfSubStr(const char *src, const char *search, int *size);
+char *intToStr(char *buffer, int value);
+void getDatetime(struct tm *tm);
+char *getDatetimeFormated(struct tm *tm);
+
 #endif
 

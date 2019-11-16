@@ -1,14 +1,23 @@
+/*
+** Filename : scraper.c
+**
+** Made by  : Baptiste LEGO
+**
+** Description  : scrap functions
+*/
+
 #include "../include/common.h"
 
-void scrapWebsite(char *name, char *url, int maxDepth) {
+void scrapWebsite(char *name, char *url, int maxDepth, int versioning) {
+    int i;
     int depth = 0;
+    int numberOfLinks = 0;
     char *path = NULL;
     char *html = NULL;
     char **links = NULL;
-    int numberOfLinks = 0, i;
 
     do {
-        path = scrapPage(name, url);
+        path = scrapPage(name, url, versioning);
         if(path != NULL) {
             html = putFileInBuffer(path);
             verifyPointer(html, "Cannot fill html in memory\n");
@@ -55,15 +64,26 @@ char **findLinks(char *html, int *numberOfLinks) {
     return res;
 }
 
-char *scrapPage(char *name, char *url) {
+char *scrapPage(char *name, char *url, int versioning) {
     char *path = myAlloc(sizeof(char) * 100, DEFAULT_ALLOC_ERR_MSG);
+    char directory[80];
     FILE *file = NULL;
+    struct tm tm;
 
     strcpy(path, name);
-    strcat(path, "/res.html");
+    if(versioning == VERSIONING_ON) {
+        strcat(path, "/");
+        strcat(path, getDatetimeFormated(&tm));
+    }
+    strcat(path, "/index.html");
 
     if (fileExist(path) == EXIT_FAILURE) {
-        createDirectory(name);
+        strcpy(directory, name);
+        if(versioning == VERSIONING_ON) {
+            strcat(directory, "/");
+            strcat(directory, getDatetimeFormated(&tm));
+        }
+        createDirectory(directory);
         file = fopen(path, "w");
         httpGet(url, (void *)file);
         printf("File created\n");

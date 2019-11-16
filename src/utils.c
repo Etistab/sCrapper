@@ -1,3 +1,11 @@
+/*
+** Filename : utils.c
+**
+** Made by  : Baptiste LEGO
+**
+** Description  : utils functions used in App
+*/
+
 #include "../include/common.h"
 #include <sys/stat.h>
 #include <unistd.h>
@@ -67,8 +75,6 @@ int createDirectory(char *name) {
     return EXIT_FAILURE;
 }
 
-
-
 void curlSetDefaultOptions(CURL *curl, void *response) {
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, false);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
@@ -115,6 +121,34 @@ int *indexOfSubStr(const char *src, const char *search, int *size) {
             count++;
         }
     }
+
+    return res;
+}
+
+char *intToStr(char *buffer, int value) {
+    sprintf(buffer, "%d", value);
+    return buffer;
+}
+
+void getDatetime(struct tm *tm) {
+    time_t rawtime = time(NULL);
+    *tm = *localtime ( &rawtime );
+    tm->tm_year += 1900;
+    tm->tm_mon++;
+}
+
+char *getDatetimeFormated(struct tm *tm) {
+    char *res = myAlloc(sizeof(char) * 100, DEFAULT_ALLOC_ERR_MSG);
+    char day[3], month[3], year[5], hour[3], min[3];
+
+    getDatetime(tm);
+    sprintf(day, "%d", tm->tm_mday);
+    sprintf(month, "%d", tm->tm_mon);
+    sprintf(year, "%d", tm->tm_year);
+    sprintf(hour, "%d", tm->tm_hour);
+    sprintf(min, "%d", tm->tm_min);
+
+    sprintf(res, "%s_%s_%s_%sH%s", day, month, year, hour, min);
 
     return res;
 }
