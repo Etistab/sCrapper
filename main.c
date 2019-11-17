@@ -9,7 +9,10 @@
 #include "include/common.h"
 
 int main(int argc, char **argv) {
-    scrapWebsite("google", "https://www.google.com", 0, VERSIONING_ON);
+    const char *type[1] = {"text/html"};
+    int versioning = VERSIONING_ON;
+
+    scrapWebsite("google", "https://www.google.com", 0, versioning, type, 1);
 
     return 0;
 }

@@ -75,14 +75,15 @@ int createDirectory(char *name) {
     return EXIT_FAILURE;
 }
 
-void curlSetDefaultOptions(CURL *curl, void *response) {
+void curlSetDefaultOptions(CURL *curl, void *body) {
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, false);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, body);
 }
 
-int httpGet(char *url, void *buffer) {
-    CURL *curl = curl_easy_init();;
+int httpGet(char *url, void *body, const char **typeAllowed, int numberOfTypeAllowed) {
+    char *contentType = NULL;
+    CURL *curl = curl_easy_init();
     CURLcode res;
 
     if (!curl) {
@@ -90,16 +91,55 @@ int httpGet(char *url, void *buffer) {
         return -1;
     }
 
-    curlSetDefaultOptions(curl, buffer);
+    curlSetDefaultOptions(curl, body);
     curl_easy_setopt(curl, CURLOPT_URL, url);
     res = curl_easy_perform(curl);
+    contentType = getContentType(curl);
+
+    if(contentTypeAllowed(contentType, typeAllowed, numberOfTypeAllowed) == EXIT_FAILURE) {
+        curl_easy_cleanup(curl);
+        return CONTENT_TYPE_NOT_ALLOWED;
+    }
     if (res != CURLE_OK) {
         printf(curl_easy_strerror(res));
+        exit(EXIT_FAILURE);
         return res;
     }
 
     curl_easy_cleanup(curl);
     return CURLE_OK;
+}
+
+char *getContentType(CURL *curl) {
+    char *ct = NULL;
+    char *buffer = NULL;
+    char *mt = myAlloc(sizeof(char) * 50, "toto");
+    CURLcode curlRes = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+
+    if(!curlRes && ct) {
+        buffer = strchr(ct, ';');
+        strncpy(mt, ct, buffer - ct);
+        mt[buffer - ct] = '\0';
+        return mt;
+    }
+
+    return NULL;
+}
+
+int contentTypeAllowed(const char *contentType, const char **typeAllowed, int numberOfTypesAllowed) {
+    int i;
+
+    if(numberOfTypesAllowed == 0) {
+        return EXIT_SUCCESS; // All types allowed by default
+    }
+
+    for(i = 0; i < numberOfTypesAllowed; i++) {
+        if(strcmp(contentType, typeAllowed[i]) == 0) {
+            return EXIT_SUCCESS;
+        }
+    }
+
+    return EXIT_FAILURE;
 }
 
 int *indexOfSubStr(const char *src, const char *search, int *size) {

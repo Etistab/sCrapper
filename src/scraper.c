@@ -8,7 +8,7 @@
 
 #include "../include/common.h"
 
-void scrapWebsite(char *name, char *url, int maxDepth, int versioning) {
+void scrapWebsite(char *name, char *url, int maxDepth, int versioning, const char **type, int numberOfType) {
     int i;
     int depth = 0;
     int numberOfLinks = 0;
@@ -17,7 +17,7 @@ void scrapWebsite(char *name, char *url, int maxDepth, int versioning) {
     char **links = NULL;
 
     do {
-        path = scrapPage(name, url, versioning);
+        path = scrapPage(name, url, versioning, type, numberOfType);
         if(path != NULL) {
             html = putFileInBuffer(path);
             verifyPointer(html, "Cannot fill html in memory\n");
@@ -64,10 +64,10 @@ char **findLinks(char *html, int *numberOfLinks) {
     return res;
 }
 
-char *scrapPage(char *name, char *url, int versioning) {
+char *scrapPage(char *name, char *url, int versioning, const char **type, int numberOfType) {
     char *path = myAlloc(sizeof(char) * 100, DEFAULT_ALLOC_ERR_MSG);
     char directory[80];
-    FILE *file = NULL;
+    FILE *body = NULL;
     struct tm tm;
 
     strcpy(path, name);
@@ -79,16 +79,25 @@ char *scrapPage(char *name, char *url, int versioning) {
 
     if (fileExist(path) == EXIT_FAILURE) {
         strcpy(directory, name);
+        createDirectory(name);
         if(versioning == VERSIONING_ON) {
             strcat(directory, "/");
             strcat(directory, getDatetimeFormated(&tm));
+            createDirectory(directory);
         }
-        createDirectory(directory);
-        file = fopen(path, "w");
-        httpGet(url, (void *)file);
-        printf("File created\n");
-        fclose(file);
-        return path;
+        body = fopen(path, "w");
+        if(httpGet(url, body, type, numberOfType) == CONTENT_TYPE_NOT_ALLOWED) {
+            fclose(body);
+            remove(path);
+            rmdir(directory);
+            printf("MIME-Type not allowed");
+            return NULL;
+
+        } else {
+            fclose(body);
+            printf("File created\n");
+            return path;
+        }
     }
 
     printf("File already exist\n");

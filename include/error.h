@@ -11,7 +11,8 @@
 #define ERROR_H
 
 //curl errors
-#define ERR_HTTP_INIT "Http Request initialization failed!"
-#define DEFAULT_ALLOC_ERR_MSG "Full memory\n"
+#define ERR_HTTP_INIT               "Http Request initialization failed!"
+#define DEFAULT_ALLOC_ERR_MSG       "Full memory\n"
+#define CONTENT_TYPE_NOT_ALLOWED    -2
 
 #endif
