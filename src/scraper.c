@@ -47,8 +47,9 @@ char **findLinks(char *html, int *numberOfLinks) {
     char search[7] = "href=\"";
 
     indexs = indexOfSubStr(html, search, numberOfLinks);
-    verifyPointer(indexs, "Cannot find substr");
-
+    if(indexs == NULL){
+        return NULL;
+    }
     res = myAlloc(sizeof(char *) * *numberOfLinks, DEFAULT_ALLOC_ERR_MSG);
 
     for(i = 0; i < *numberOfLinks; i++) {
