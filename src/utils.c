@@ -1,3 +1,11 @@
+/*
+** Filename : utils.c
+**
+** Made by  : Baptiste LEGO
+**
+** Description  : utils functions used in App
+*/
+
 #include "../include/common.h"
 #include <sys/stat.h>
 #include <unistd.h>
@@ -67,16 +75,15 @@ int createDirectory(char *name) {
     return EXIT_FAILURE;
 }
 
-
-
-void curlSetDefaultOptions(CURL *curl, void *response) {
+void curlSetDefaultOptions(CURL *curl, void *body) {
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, false);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, body);
 }
 
-int httpGet(char *url, void *buffer) {
-    CURL *curl = curl_easy_init();;
+int httpGet(char *url, void *body, const char **typeAllowed, int numberOfTypeAllowed) {
+    char *contentType = NULL;
+    CURL *curl = curl_easy_init();
     CURLcode res;
 
     if (!curl) {
@@ -84,16 +91,55 @@ int httpGet(char *url, void *buffer) {
         return -1;
     }
 
-    curlSetDefaultOptions(curl, buffer);
+    curlSetDefaultOptions(curl, body);
     curl_easy_setopt(curl, CURLOPT_URL, url);
     res = curl_easy_perform(curl);
+    contentType = getContentType(curl);
+
+    if(contentTypeAllowed(contentType, typeAllowed, numberOfTypeAllowed) == EXIT_FAILURE) {
+        curl_easy_cleanup(curl);
+        return CONTENT_TYPE_NOT_ALLOWED;
+    }
     if (res != CURLE_OK) {
         printf(curl_easy_strerror(res));
+        exit(EXIT_FAILURE);
         return res;
     }
 
     curl_easy_cleanup(curl);
     return CURLE_OK;
+}
+
+char *getContentType(CURL *curl) {
+    char *ct = NULL;
+    char *buffer = NULL;
+    char *mt = myAlloc(sizeof(char) * 50, "toto");
+    CURLcode curlRes = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+
+    if(!curlRes && ct) {
+        buffer = strchr(ct, ';');
+        strncpy(mt, ct, buffer - ct);
+        mt[buffer - ct] = '\0';
+        return mt;
+    }
+
+    return NULL;
+}
+
+int contentTypeAllowed(const char *contentType, const char **typeAllowed, int numberOfTypesAllowed) {
+    int i;
+
+    if(numberOfTypesAllowed == 0) {
+        return EXIT_SUCCESS; // All types allowed by default
+    }
+
+    for(i = 0; i < numberOfTypesAllowed; i++) {
+        if(strcmp(contentType, typeAllowed[i]) == 0) {
+            return EXIT_SUCCESS;
+        }
+    }
+
+    return EXIT_FAILURE;
 }
 
 int *indexOfSubStr(const char *src, const char *search, int *size) {
@@ -115,6 +161,34 @@ int *indexOfSubStr(const char *src, const char *search, int *size) {
             count++;
         }
     }
+
+    return res;
+}
+
+char *intToStr(char *buffer, int value) {
+    sprintf(buffer, "%d", value);
+    return buffer;
+}
+
+void getDatetime(struct tm *tm) {
+    time_t rawtime = time(NULL);
+    *tm = *localtime ( &rawtime );
+    tm->tm_year += 1900;
+    tm->tm_mon++;
+}
+
+char *getDatetimeFormated(struct tm *tm) {
+    char *res = myAlloc(sizeof(char) * 100, DEFAULT_ALLOC_ERR_MSG);
+    char day[3], month[3], year[5], hour[3], min[3];
+
+    getDatetime(tm);
+    sprintf(day, "%d", tm->tm_mday);
+    sprintf(month, "%d", tm->tm_mon);
+    sprintf(year, "%d", tm->tm_year);
+    sprintf(hour, "%d", tm->tm_hour);
+    sprintf(min, "%d", tm->tm_min);
+
+    sprintf(res, "%s_%s_%s_%sH%s", day, month, year, hour, min);
 
     return res;
 }

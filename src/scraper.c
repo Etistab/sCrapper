@@ -1,14 +1,23 @@
+/*
+** Filename : scraper.c
+**
+** Made by  : Baptiste LEGO
+**
+** Description  : scrap functions
+*/
+
 #include "../include/common.h"
 
-void scrapWebsite(char *name, char *url, int maxDepth) {
+void scrapWebsite(char *name, char *url, int maxDepth, int versioning, const char **type, int numberOfType) {
+    int i;
     int depth = 0;
+    int numberOfLinks = 0;
     char *path = NULL;
     char *html = NULL;
     char **links = NULL;
-    int numberOfLinks = 0, i;
 
     do {
-        path = scrapPage(name, url);
+        path = scrapPage(name, url, versioning, type, numberOfType);
         if(path != NULL) {
             html = putFileInBuffer(path);
             verifyPointer(html, "Cannot fill html in memory\n");
@@ -55,20 +64,40 @@ char **findLinks(char *html, int *numberOfLinks) {
     return res;
 }
 
-char *scrapPage(char *name, char *url) {
+char *scrapPage(char *name, char *url, int versioning, const char **type, int numberOfType) {
     char *path = myAlloc(sizeof(char) * 100, DEFAULT_ALLOC_ERR_MSG);
-    FILE *file = NULL;
+    char directory[80];
+    FILE *body = NULL;
+    struct tm tm;
 
     strcpy(path, name);
-    strcat(path, "/res.html");
+    if(versioning == VERSIONING_ON) {
+        strcat(path, "/");
+        strcat(path, getDatetimeFormated(&tm));
+    }
+    strcat(path, "/index.html");
 
     if (fileExist(path) == EXIT_FAILURE) {
+        strcpy(directory, name);
         createDirectory(name);
-        file = fopen(path, "w");
-        httpGet(url, (void *)file);
-        printf("File created\n");
-        fclose(file);
-        return path;
+        if(versioning == VERSIONING_ON) {
+            strcat(directory, "/");
+            strcat(directory, getDatetimeFormated(&tm));
+            createDirectory(directory);
+        }
+        body = fopen(path, "w");
+        if(httpGet(url, body, type, numberOfType) == CONTENT_TYPE_NOT_ALLOWED) {
+            fclose(body);
+            remove(path);
+            rmdir(directory);
+            printf("MIME-Type not allowed");
+            return NULL;
+
+        } else {
+            fclose(body);
+            printf("File created\n");
+            return path;
+        }
     }
 
     printf("File already exist\n");

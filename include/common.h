@@ -1,3 +1,11 @@
+/*
+** Filename : common.h
+**
+** Made by  : Baptiste LEGO
+**
+** Description  : common inclusions
+*/
+
 #ifndef COMMON_H
 
 #define COMMON_H
